@@ -1,0 +1,25 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t thilanse96/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run thilanse96/react-test npm test -- --coverage
+
+after_success:
+    # Build all images
+    - docker build -t thilanse96/multi-client ./client
+    - docker build -t thilanse96/multi-nginx ./nginx
+    - docker build -t thilanse96/multi-server ./server
+    - docker build -t thilanse96/multi-worker ./worker
+
+    # Login to the docker cli
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+
+    # Push the images to Docker Hub
+    - docker push thilanse96/multi-client
+    - docker push thilanse96/multi-nginx
+    - docker push thilanse96/multi-server
+    - docker push thilanse96/multi-worker
